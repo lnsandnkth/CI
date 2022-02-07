@@ -5,7 +5,8 @@ import com.google.gson.JsonObject;
 
 public class Repository {
 
-    public String name, fullName, url, cloneUrl;
+    public final String name, fullName, url, cloneUrl;
+    public final User owner;
 
     public Repository(JsonElement repoElement) {
 
@@ -14,6 +15,7 @@ public class Repository {
         this.fullName = repoObj.get("full_name").getAsString();
         this.url = repoObj.get("html_url").getAsString();
         this.cloneUrl = repoObj.get("clone_url").getAsString();
+        this.owner = new User(repoObj.get("owner"));
     }
 
     @Override
@@ -24,6 +26,7 @@ public class Repository {
                ", fullName='" + fullName + '\'' +
                ", url='" + url + '\'' +
                ", cloneUrl='" + cloneUrl + '\'' +
+               ", owner=" + owner +
                '}';
     }
 }
