@@ -3,14 +3,45 @@ package com.example;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+/**
+ * A class representing a Github User It could be the Repository owner, the commit's author, the committer, the pusher,
+ * the event sender, etc.
+ *
+ * @see PushEvent
+ * @see Repository
+ * @see Commit
+ */
 public class User {
 
-    public final String
-        name,
-        email,
-        htmlUrl,
-        avatarUrl;
+    /**
+     * The user's name : is either the user's login, username or display name (in this order of data disponibility)
+     */
+    public final String name;
 
+    /**
+     * The user's email : user email as a String if available or empty String "" if not available
+     */
+    public final String email;
+
+    /**
+     * A link to the user's Github profile page : user profile URL as String if available or empty String "" if not
+     */
+    public final String htmlUrl;
+
+    /**
+     * A link to the user's Github avatar image : user avatar image URL as String if available or empty String "" if
+     * not
+     */
+    public final String avatarUrl;
+
+    /**
+     * Make a new User from any JsonElement representing a Github user. This JsonElement must be retrieved from the
+     * Github API's Push Event
+     *
+     * @param userElement JsonElement representing the user
+     *
+     * @see PushEvent
+     */
     public User(JsonElement userElement) {
 
         JsonObject userObj = userElement.getAsJsonObject();

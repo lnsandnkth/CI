@@ -3,11 +3,48 @@ package com.example;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+/**
+ * A class representing a Github Repository retrieved from a PushEvent
+ *
+ * @see PushEvent
+ */
 public class Repository {
 
-    public final String name, fullName, url, cloneUrl;
+    /**
+     * Name of the Repository as on Github
+     */
+    public final String name;
+
+    /**
+     * Full name of the Repository : {owner.name}/{repository.name}
+     */
+    public final String fullName;
+
+    /**
+     * URL linking to the Repository's Github page
+     */
+    public final String url;
+
+    /**
+     * URL to be used when cloning the Repository
+     */
+    public final String cloneUrl;
+
+    /**
+     * The Repository's owner as a User object
+     *
+     * @see User
+     */
     public final User owner;
 
+    /**
+     * Make a new Repository from a JsonElement representing a Github repo. This JsonElement must be retrieved from the
+     * Github API's Push Event
+     *
+     * @param repoElement JsonElement representing the repo
+     *
+     * @see PushEvent
+     */
     public Repository(JsonElement repoElement) {
 
         JsonObject repoObj = repoElement.getAsJsonObject();

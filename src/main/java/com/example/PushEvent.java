@@ -5,19 +5,97 @@ import com.google.gson.JsonObject;
 
 import java.util.List;
 
+/**
+ * Class representing a "push" Github Webhook Event in an HTTP POST Request
+ */
 public class PushEvent {
 
+    /**
+     * Value contained in the X-Github-Event header of the "push" Event POST Request
+     */
     public static final String TYPE = "push";
 
+    /**
+     * Type of Event : always PushEvent.TYPE
+     *
+     * @see PushEvent#TYPE
+     */
     public final String type;
-    public final Repository repo;
-    public final String ref, branchName;
-    public final User pusher, sender;
-    public final boolean created, deleted, forced;
 
+    /**
+     * Repository the push has been made on
+     *
+     * @see Repository
+     */
+    public final Repository repo;
+
+    /**
+     * Github ref value representing the branch pushed on : refs/heads/{PushEvent.branchName}
+     *
+     * @see PushEvent#branchName
+     */
+    public final String ref;
+
+    /**
+     * Git branch name the push has been made on. Extracted from the Github ref
+     *
+     * @see PushEvent#ref
+     */
+    public final String branchName;
+
+    /**
+     * The User who made the push
+     *
+     * @see User
+     */
+    public final User pusher;
+
+    /**
+     * The User that triggered the event (could be Github)
+     *
+     * @see User
+     */
+    public final User sender;
+
+    /**
+     * Flag : did this push create the ref ?
+     *
+     * @see PushEvent#ref
+     */
+    public final boolean created;
+
+    /**
+     * Flag : did this push delete de ref ?
+     *
+     * @see PushEvent#ref
+     */
+    public final boolean deleted;
+
+    /**
+     * Flag : was this a force push (even with lease) ?
+     */
+    public final boolean forced;
+
+    /**
+     * The commit who's the head after the push
+     *
+     * @see Commit
+     */
     public final Commit headCommit;
+
+    /**
+     * List of the commits contained in the push
+     *
+     * @see Commit
+     */
     public final List<Commit> commits;
 
+    /**
+     * Make a new PushEvent object from a JsonElement retrieved from a "push" Github Webhook Event in an HTTP POST
+     * Request
+     *
+     * @param pushEvent JsonElement representing the push webhook event
+     */
     public PushEvent(JsonElement pushEvent) {
 
         JsonObject eventObj = pushEvent.getAsJsonObject();
