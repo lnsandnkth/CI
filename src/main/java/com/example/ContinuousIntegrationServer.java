@@ -17,27 +17,40 @@ import java.io.InputStreamReader;
  */
 public class ContinuousIntegrationServer extends AbstractHandler {
 
+    /**
+     * Handles an HTTP Request
+     *
+     * @param target the HTTP target (e.g. : "/", "/images/...", "/history", etc.)
+     * @param baseRequest the "raw" HTTP Request
+     * @param request the processed HTTP Request
+     * @param response the response the Server sends back to the request's sender
+     *
+     * @throws IOException
+     */
     public void handle(String target,
                        Request baseRequest,
                        HttpServletRequest request,
                        HttpServletResponse response)
-        throws IOException, ServletException {
+        throws IOException {
 
         System.out.println(target);
         System.out.println(baseRequest);
 
+        // Get event type
         String eventType = baseRequest.getHeader("X-Github-Event");
-        if (!eventType.equalsIgnoreCase(PushEvent.TYPE)) {
+        if (!eventType.equalsIgnoreCase(PushEvent.TYPE)) { // If not a push event stop
             System.err.println("[webhook] unsupported event type " + eventType + "! : ");
             response.setStatus(HttpServletResponse.SC_NOT_IMPLEMENTED);
             baseRequest.setHandled(true);
             return;
         }
 
+        // set response as OK because we know how to deal with 'push' events
         response.setContentType("text/html;charset=utf-8");
         response.setStatus(HttpServletResponse.SC_OK);
         baseRequest.setHandled(true);
 
+        // Parse 'push' event raw JSON data
         PushEvent pushEvent = new PushEvent(JsonParser.parseReader(new InputStreamReader(request.getInputStream())));
 
         // here you do all the continuous integration tasks
