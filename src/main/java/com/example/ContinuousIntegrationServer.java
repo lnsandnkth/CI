@@ -38,6 +38,7 @@ public class ContinuousIntegrationServer extends AbstractHandler {
     // used to start the CI server in command line
     public static void main(String[] args) throws Exception {
 
+
         String portENV = System.getenv("PORT");
         System.out.println("ENV PORT IS " + portENV);
 
@@ -51,6 +52,7 @@ public class ContinuousIntegrationServer extends AbstractHandler {
         System.out.println("SELECTED PORT IS " + port);
 
         Server server = new Server(port);
+
         server.setHandler(new ContinuousIntegrationServer());
         server.start();
         server.join();
