@@ -1,5 +1,6 @@
 package com.example;
 
+import com.google.gson.JsonParser;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.AbstractHandler;
@@ -8,6 +9,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.InputStreamReader;
 
 /**
  * Skeleton of a ContinuousIntegrationServer which acts as webhook See the Jetty documentation for API documentation of
@@ -21,16 +23,28 @@ public class ContinuousIntegrationServer extends AbstractHandler {
                        HttpServletResponse response)
         throws IOException, ServletException {
 
+        System.out.println(target);
+        System.out.println(baseRequest);
+
+        String eventType = baseRequest.getHeader("X-Github-Event");
+        if (!eventType.equalsIgnoreCase(PushEvent.TYPE)) {
+            System.err.println("[webhook] unsupported event type " + eventType + "! : ");
+            response.setStatus(HttpServletResponse.SC_NOT_IMPLEMENTED);
+            baseRequest.setHandled(true);
+            return;
+        }
+
         response.setContentType("text/html;charset=utf-8");
         response.setStatus(HttpServletResponse.SC_OK);
         baseRequest.setHandled(true);
 
-        System.out.println(target);
+        PushEvent pushEvent = new PushEvent(JsonParser.parseReader(new InputStreamReader(request.getInputStream())));
 
         // here you do all the continuous integration tasks
         // for example
         // 1st clone your repository
         // 2nd compile the code
+
 
         response.getWriter().println("CI job done");
     }
@@ -46,7 +60,7 @@ public class ContinuousIntegrationServer extends AbstractHandler {
         try {
             port = Integer.parseInt(portENV);
         } catch (NumberFormatException ex) {
-            port = 80;
+            port = 8080;
             System.out.println("NO ENV SET DEFAULTING TO " + port);
         }
         System.out.println("SELECTED PORT IS " + port);
