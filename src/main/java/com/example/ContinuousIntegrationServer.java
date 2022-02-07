@@ -44,6 +44,8 @@ public class ContinuousIntegrationServer extends AbstractHandler {
         // for example
         // 1st clone your repository
         // 2nd compile the code
+        System.out.println("PUSH EVENT :");
+        System.out.println(pushEvent);
 
 
         response.getWriter().println("CI job done");
@@ -66,7 +68,6 @@ public class ContinuousIntegrationServer extends AbstractHandler {
         System.out.println("SELECTED PORT IS " + port);
 
         Server server = new Server(port);
-
         server.setHandler(new ContinuousIntegrationServer());
         server.start();
         server.join();
