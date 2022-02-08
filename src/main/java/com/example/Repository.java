@@ -2,6 +2,10 @@ package com.example;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import org.eclipse.jgit.api.CloneCommand;
+import org.eclipse.jgit.api.Git;
+
+import java.io.File;
 
 /**
  * A class representing a Github Repository retrieved from a PushEvent
@@ -53,6 +57,18 @@ public class Repository {
         this.url = repoObj.get("html_url").getAsString();
         this.cloneUrl = repoObj.get("clone_url").getAsString();
         this.owner = new User(repoObj.get("owner"));
+    }
+
+    public CloneCommand cloneRepository(String branch, File target) {
+
+        CloneCommand clone = Git.cloneRepository()
+            .setURI(this.cloneUrl)
+            .setBranch(branch);
+
+        if (target != null && (!target.exists() || target.isDirectory()))
+            clone.setDirectory(target);
+
+        return clone;
     }
 
     @Override

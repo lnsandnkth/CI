@@ -32,6 +32,8 @@ dependencies {
     implementation 'javax.servlet:javax.servlet-api:3.0.1'
     implementation 'org.eclipse.jetty:jetty-server:9.4.26.v20200117'
     implementation 'com.google.code.gson:gson:2.8.9'
+    implementation 'org.eclipse.jgit:org.eclipse.jgit:6.0.0.202111291000-r'
+    implementation 'commons-io:commons-io:2.11.0'
 
     implementation "org.gradle:gradle-tooling-api:$toolingApiVersion"
     // The tooling API need an SLF4J implementation available at runtime
