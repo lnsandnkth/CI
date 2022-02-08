@@ -1,15 +1,21 @@
 package com.example;
 
 import com.google.gson.JsonParser;
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.AbstractHandler;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.Ref;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.function.BiConsumer;
 
 /**
  * Skeleton of a ContinuousIntegrationServer which acts as webhook See the Jetty documentation for API documentation of
@@ -33,15 +39,20 @@ public class ContinuousIntegrationServer extends AbstractHandler {
                        HttpServletResponse response)
         throws IOException {
 
+        BiConsumer<String, Integer> onError = (errorMessage, statusCode) -> {
+
+            System.err.println(errorMessage);
+            response.setStatus(statusCode);
+            baseRequest.setHandled(true);
+        };
+
         System.out.println(target);
         System.out.println(baseRequest);
 
         // Get event type
         String eventType = baseRequest.getHeader("X-Github-Event");
-        if (!eventType.equalsIgnoreCase(PushEvent.TYPE)) { // If not a push event stop
-            System.err.println("[webhook] unsupported event type " + eventType + "! : ");
-            response.setStatus(HttpServletResponse.SC_NOT_IMPLEMENTED);
-            baseRequest.setHandled(true);
+        if (!eventType.equalsIgnoreCase(PushEvent.TYPE)) {
+            onError.accept("[webhook] unsupported event type " + eventType + "! : ", HttpServletResponse.SC_NOT_IMPLEMENTED);
             return;
         }
 
@@ -52,6 +63,34 @@ public class ContinuousIntegrationServer extends AbstractHandler {
 
         // Parse 'push' event raw JSON data
         PushEvent pushEvent = new PushEvent(JsonParser.parseReader(new InputStreamReader(request.getInputStream())));
+
+        System.out.printf("Cloning repository %s...\n", pushEvent.repo.url);
+        Git gitRepository = null;
+
+        File outDir = new File("./temp_repo/");
+        if (outDir.exists()) {
+            FileUtils.deleteDirectory(outDir);
+        }
+
+        try {
+            gitRepository = pushEvent.repo.cloneRepository(pushEvent.branchName, outDir).call();
+        } catch (GitAPIException e) {
+            onError.accept("[webhook] couldn't clone Github Repository! " + pushEvent.repo, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            e.printStackTrace();
+            return;
+        }
+
+        String fullBranch = gitRepository.getRepository().getFullBranch();
+        Ref ref = gitRepository.getRepository().exactRef(fullBranch);
+        System.out.printf("Checked out branch %s at commit %s...\n", fullBranch, ref.getObjectId().name());
+
+        try {
+            gitRepository.clean().call();
+        } catch (GitAPIException e) {
+            e.printStackTrace();
+        }
+        gitRepository.close();
+
 
         // here you do all the continuous integration tasks
         // for example
