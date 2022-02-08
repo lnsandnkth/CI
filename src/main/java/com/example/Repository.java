@@ -2,10 +2,13 @@ package com.example;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * A class representing a Github Repository retrieved from a PushEvent
@@ -41,6 +44,9 @@ public class Repository {
      */
     public final User owner;
 
+    private Git git;
+    private String directory;
+
     /**
      * Make a new Repository from a JsonElement representing a Github repo. This JsonElement must be retrieved from the
      * Github API's Push Event
@@ -59,16 +65,65 @@ public class Repository {
         this.owner = new User(repoObj.get("owner"));
     }
 
-    public CloneCommand cloneRepository(String branch, File target) {
+    public Git cloneRepository(String branch, String target) {
 
+        if (this.git != null && this.directory != null)
+            this.clean();
+
+        // dir used for repo cloning
+        File outDir = new File(target);
+        if (outDir.exists()) {
+            try {
+                FileUtils.deleteDirectory(outDir);
+            } catch (IOException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+        this.directory = target;
+
+        // prepare command
         CloneCommand clone = Git.cloneRepository()
             .setURI(this.cloneUrl)
             .setBranch(branch);
 
-        if (target != null && (!target.exists() || target.isDirectory()))
-            clone.setDirectory(target);
+        if (!outDir.exists() || outDir.isDirectory())
+            clone.setDirectory(outDir);
 
-        return clone;
+        // clone the repository and checkout right branch
+        try {
+            this.git = clone.call();
+        } catch (GitAPIException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        return this.git;
+    }
+
+    public void clean() {
+
+        // close git resource
+        try {
+            git.clean().call();
+        } catch (GitAPIException e) {
+            e.printStackTrace();
+        }
+        git.close();
+
+        this.git = null;
+
+        // delete temporary directory
+        File outDir = new File(this.directory);
+        if (outDir.exists()) {
+            try {
+                FileUtils.deleteDirectory(outDir);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        this.directory = null;
     }
 
     @Override

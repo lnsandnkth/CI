@@ -8,6 +8,7 @@ import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.Repository;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -16,6 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
  * Skeleton of a ContinuousIntegrationServer which acts as webhook See the Jetty documentation for API documentation of
@@ -65,32 +67,21 @@ public class ContinuousIntegrationServer extends AbstractHandler {
         PushEvent pushEvent = new PushEvent(JsonParser.parseReader(new InputStreamReader(request.getInputStream())));
 
         System.out.printf("Cloning repository %s...\n", pushEvent.repo.url);
-        Git gitRepository = null;
+        Git gitRepository = pushEvent.repo.cloneRepository(pushEvent.branchName, "./temp_repo/");
 
-        File outDir = new File("./temp_repo/");
-        if (outDir.exists()) {
-            FileUtils.deleteDirectory(outDir);
-        }
-
-        try {
-            gitRepository = pushEvent.repo.cloneRepository(pushEvent.branchName, outDir).call();
-        } catch (GitAPIException e) {
+        // dir used for repo cloning
+        if (gitRepository == null) {
             onError.accept("[webhook] couldn't clone Github Repository! " + pushEvent.repo, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            e.printStackTrace();
             return;
         }
 
+        // print current state (branch + commit)
         String fullBranch = gitRepository.getRepository().getFullBranch();
         Ref ref = gitRepository.getRepository().exactRef(fullBranch);
         System.out.printf("Checked out branch %s at commit %s...\n", fullBranch, ref.getObjectId().name());
 
-        try {
-            gitRepository.clean().call();
-        } catch (GitAPIException e) {
-            e.printStackTrace();
-        }
-        gitRepository.close();
-
+        // clean up repository
+        pushEvent.repo.clean();
 
         // here you do all the continuous integration tasks
         // for example
@@ -98,7 +89,6 @@ public class ContinuousIntegrationServer extends AbstractHandler {
         // 2nd compile the code
         System.out.println("PUSH EVENT :");
         System.out.println(pushEvent);
-
 
         response.getWriter().println("CI job done");
     }
@@ -110,6 +100,8 @@ public class ContinuousIntegrationServer extends AbstractHandler {
         String portENV = System.getenv("PORT");
         System.out.println("ENV PORT IS " + portENV);
 
+
+        // get PORT from the environment variables
         int port;
         try {
             port = Integer.parseInt(portENV);
