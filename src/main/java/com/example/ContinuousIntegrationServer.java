@@ -11,8 +11,10 @@ import org.gradle.tooling.GradleConnectionException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.DirectoryNotEmptyException;
 import java.util.function.BiConsumer;
 
 /**
@@ -44,6 +46,12 @@ public class ContinuousIntegrationServer extends AbstractHandler {
             baseRequest.setHandled(true);
         };
 
+        BiConsumer<PushEvent, GradleProject> fatalCleanup = (event, project) -> {
+
+            if (project != null) project.close();
+            if (event != null) event.repo.clean();
+        };
+
         System.out.println(target);
         System.out.println(baseRequest);
 
@@ -63,11 +71,15 @@ public class ContinuousIntegrationServer extends AbstractHandler {
         PushEvent pushEvent = new PushEvent(JsonParser.parseReader(new InputStreamReader(request.getInputStream())));
 
         System.out.printf("Cloning repository %s...\n", pushEvent.repo.url);
-        Git gitRepository = pushEvent.repo.cloneRepository(pushEvent.branchName, "./temp_repo/");
+        Git gitRepository = null;
+        try {
+            gitRepository = pushEvent.repo.cloneRepository(pushEvent.branchName, "./temp_repo/");
+        } catch (DirectoryNotEmptyException ex) {
+            onError.accept("[webhook] can't clone repository, target directory " + (new File("./temp_repo").getAbsolutePath()) + " not empty!", HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        }
 
-        // dir used for repo cloning
         if (gitRepository == null) {
-            onError.accept("[webhook] couldn't clone Github Repository! " + pushEvent.repo, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            onError.accept("[webhook] couldn't clone Github Repository! " + pushEvent.repo.fullName, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             return;
         }
 
@@ -78,10 +90,11 @@ public class ContinuousIntegrationServer extends AbstractHandler {
 
         if (!pushEvent.ref.equals(fullBranch) || !pushEvent.headCommit.id.equals(ref.getObjectId().name())) {
             onError.accept("[webhook] wrong ref / commit checked out! should be on " + pushEvent.ref + " @ " + pushEvent.headCommit.id, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            fatalCleanup.accept(pushEvent, null);
             return;
         }
 
-        System.out.printf("Linking with Gradle Project %s @ %s...\n", pushEvent.repo.name, pushEvent.repo.directory());
+        System.out.printf("Linking with Gradle Project %s @ %s...\n", pushEvent.repo.fullName, pushEvent.repo.directory());
         GradleProject project = null;
         try {
             project = new GradleProject(pushEvent.repo.directory()).link();
@@ -92,6 +105,7 @@ public class ContinuousIntegrationServer extends AbstractHandler {
 
         if (project == null || !project.linked()) {
             onError.accept("[webhook] project linking failed. must be a valid gradle project!", HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            fatalCleanup.accept(pushEvent, project);
             return;
         }
 
@@ -113,8 +127,8 @@ public class ContinuousIntegrationServer extends AbstractHandler {
 
         response.getWriter().println("CI job done");
 
-        // clean up repository
-        pushEvent.repo.clean();
+        // clean up
+        fatalCleanup.accept(pushEvent, project);
     }
 
     // used to start the CI server in command line
