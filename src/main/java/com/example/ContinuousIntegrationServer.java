@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.DirectoryNotEmptyException;
 import java.util.function.BiConsumer;
+import com.example.database.*;
 
 /**
  * Skeleton of a ContinuousIntegrationServer which acts as webhook See the Jetty documentation for API documentation of
@@ -133,12 +134,12 @@ public class ContinuousIntegrationServer extends AbstractHandler {
             fatalCleanup.accept(pushEvent, project);
             break;
         case "/buildinfo":
-            //DatabaseHistory.generateBuildInfoPage(response);
+            DatabaseHistory.generateBuildInfoPage(response);
             response.setStatus(HttpServletResponse.SC_OK);
             baseRequest.setHandled(true);
             break;
         case "/buildhistory":
-            //DatabaseHistory.generateBuildHistoryPage(response);
+            DatabaseHistory.generateBuildHistoryPage(response);
             response.setStatus(HttpServletResponse.SC_OK);
             baseRequest.setHandled(true);
             break;
