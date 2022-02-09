@@ -14,6 +14,7 @@ version '1.0-SNAPSHOT'
 
 ext {
     javaMainClass = "com.example.ContinuousIntegrationServer"
+    toolingApiVersion = gradle.gradleVersion
 }
 
 application {
@@ -22,6 +23,7 @@ application {
 
 repositories {
     mavenCentral()
+    maven { url 'https://repo.gradle.org/gradle/libs-releases' }
 }
 
 dependencies {
@@ -30,6 +32,10 @@ dependencies {
     implementation 'javax.servlet:javax.servlet-api:3.0.1'
     implementation 'org.eclipse.jetty:jetty-server:9.4.26.v20200117'
     implementation 'com.google.code.gson:gson:2.8.9'
+
+    implementation "org.gradle:gradle-tooling-api:$toolingApiVersion"
+    // The tooling API need an SLF4J implementation available at runtime
+    runtimeOnly 'org.slf4j:slf4j-simple:1.7.10'
 }
 
 test {
