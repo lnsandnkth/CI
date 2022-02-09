@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.DirectoryNotEmptyException;
 import java.util.function.BiConsumer;
+import com.example.database.*;
 
 /**
  * Skeleton of a ContinuousIntegrationServer which acts as webhook See the Jetty documentation for API documentation of
@@ -55,80 +56,94 @@ public class ContinuousIntegrationServer extends AbstractHandler {
         System.out.println(target);
         System.out.println(baseRequest);
 
-        // Get event type
-        String eventType = baseRequest.getHeader("X-Github-Event");
-        if (!eventType.equalsIgnoreCase(PushEvent.TYPE)) {
-            onError.accept("[webhook] unsupported event type " + eventType + "! : ", HttpServletResponse.SC_NOT_IMPLEMENTED);
-            return;
-        }
+        switch(request.getRequestURI()){
+            case "gitevent":
+            // Get event type
+            String eventType = baseRequest.getHeader("X-Github-Event");
+            if (!eventType.equalsIgnoreCase(PushEvent.TYPE)) {
+                onError.accept("[webhook] unsupported event type " + eventType + "! : ", HttpServletResponse.SC_NOT_IMPLEMENTED);
+                return;
+            }
 
-        // set response as OK because we know how to deal with 'push' events
-        response.setContentType("text/html;charset=utf-8");
-        response.setStatus(HttpServletResponse.SC_OK);
-        baseRequest.setHandled(true);
+            // set response as OK because we know how to deal with 'push' events
+            response.setContentType("text/html;charset=utf-8");
+            response.setStatus(HttpServletResponse.SC_OK);
+            baseRequest.setHandled(true);
 
-        // Parse 'push' event raw JSON data
-        PushEvent pushEvent = new PushEvent(JsonParser.parseReader(new InputStreamReader(request.getInputStream())));
+            // Parse 'push' event raw JSON data
+            PushEvent pushEvent = new PushEvent(JsonParser.parseReader(new InputStreamReader(request.getInputStream())));
 
-        System.out.printf("Cloning repository %s...\n", pushEvent.repo.url);
-        Git gitRepository = null;
-        try {
-            gitRepository = pushEvent.repo.cloneRepository(pushEvent.branchName, "./temp_repo/");
-        } catch (DirectoryNotEmptyException ex) {
-            onError.accept("[webhook] can't clone repository, target directory " + (new File("./temp_repo").getAbsolutePath()) + " not empty!", HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-        }
+            System.out.printf("Cloning repository %s...\n", pushEvent.repo.url);
+            Git gitRepository = null;
+            try {
+                gitRepository = pushEvent.repo.cloneRepository(pushEvent.branchName, "./temp_repo/");
+            } catch (DirectoryNotEmptyException ex) {
+                onError.accept("[webhook] can't clone repository, target directory " + (new File("./temp_repo").getAbsolutePath()) + " not empty!", HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            }
 
-        if (gitRepository == null) {
-            onError.accept("[webhook] couldn't clone Github Repository! " + pushEvent.repo.fullName, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            return;
-        }
+            if (gitRepository == null) {
+                onError.accept("[webhook] couldn't clone Github Repository! " + pushEvent.repo.fullName, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                return;
+            }
 
-        // print current state (branch + commit)
-        String fullBranch = gitRepository.getRepository().getFullBranch();
-        Ref ref = gitRepository.getRepository().exactRef(fullBranch);
-        System.out.printf("Checked out branch %s at commit %s...\n", fullBranch, ref.getObjectId().name());
+            // print current state (branch + commit)
+            String fullBranch = gitRepository.getRepository().getFullBranch();
+            Ref ref = gitRepository.getRepository().exactRef(fullBranch);
+            System.out.printf("Checked out branch %s at commit %s...\n", fullBranch, ref.getObjectId().name());
 
-        if (!pushEvent.ref.equals(fullBranch) || !pushEvent.headCommit.id.equals(ref.getObjectId().name())) {
-            onError.accept("[webhook] wrong ref / commit checked out! should be on " + pushEvent.ref + " @ " + pushEvent.headCommit.id, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            fatalCleanup.accept(pushEvent, null);
-            return;
-        }
+            if (!pushEvent.ref.equals(fullBranch) || !pushEvent.headCommit.id.equals(ref.getObjectId().name())) {
+                onError.accept("[webhook] wrong ref / commit checked out! should be on " + pushEvent.ref + " @ " + pushEvent.headCommit.id, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                fatalCleanup.accept(pushEvent, null);
+                return;
+            }
 
-        System.out.printf("Linking with Gradle Project %s @ %s...\n", pushEvent.repo.fullName, pushEvent.repo.directory());
-        GradleProject project = null;
-        try {
-            project = new GradleProject(pushEvent.repo.directory()).link();
-        } catch (GradleConnectionException ex) {
-            onError.accept("[webhook] couldn't connect to gradle project in : " + pushEvent.repo.directory() + "\n[webhook][errlog] printing stacktrace...", HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            ex.printStackTrace();
-        }
+            System.out.printf("Linking with Gradle Project %s @ %s...\n", pushEvent.repo.fullName, pushEvent.repo.directory());
+            GradleProject project = null;
+            try {
+                project = new GradleProject(pushEvent.repo.directory()).link();
+            } catch (GradleConnectionException ex) {
+                onError.accept("[webhook] couldn't connect to gradle project in : " + pushEvent.repo.directory() + "\n[webhook][errlog] printing stacktrace...", HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                ex.printStackTrace();
+            }
 
-        if (project == null || !project.linked()) {
-            onError.accept("[webhook] project linking failed. must be a valid gradle project!", HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            if (project == null || !project.linked()) {
+                onError.accept("[webhook] project linking failed. must be a valid gradle project!", HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                fatalCleanup.accept(pushEvent, project);
+                return;
+            }
+
+            System.out.println("Linking succeeded !");
+            System.out.println("Building project...");
+
+            ByteArrayOutputStream buildLogs = new ByteArrayOutputStream();
+            boolean buildStatus = project.buildProject(buildLogs);
+
+            System.out.println("Project " + (buildStatus? "successfully built" : "build failed") + "!");
+            System.out.println("[webhook][build logs]\n" + buildLogs);
+
+            // here you do all the continuous integration tasks
+            // for example
+            // 1st clone your repository
+            // 2nd compile the code
+            System.out.println("PUSH EVENT :");
+            System.out.println(pushEvent);
+
+            response.getWriter().println("CI job done");
+
+            // clean up
             fatalCleanup.accept(pushEvent, project);
-            return;
+            break;
+        case "/buildinfo":
+            DatabaseHistory.generateBuildInfoPage(response);
+            response.setStatus(HttpServletResponse.SC_OK);
+            baseRequest.setHandled(true);
+            break;
+        case "/buildhistory":
+            DatabaseHistory.generateBuildHistoryPage(response);
+            response.setStatus(HttpServletResponse.SC_OK);
+            baseRequest.setHandled(true);
+            break;
         }
-
-        System.out.println("Linking succeeded !");
-        System.out.println("Building project...");
-
-        ByteArrayOutputStream buildLogs = new ByteArrayOutputStream();
-        boolean buildStatus = project.buildProject(buildLogs);
-
-        System.out.println("Project " + (buildStatus? "successfully built" : "build failed") + "!");
-        System.out.println("[webhook][build logs]\n" + buildLogs);
-
-        // here you do all the continuous integration tasks
-        // for example
-        // 1st clone your repository
-        // 2nd compile the code
-        System.out.println("PUSH EVENT :");
-        System.out.println(pushEvent);
-
-        response.getWriter().println("CI job done");
-
-        // clean up
-        fatalCleanup.accept(pushEvent, project);
     }
 
     // used to start the CI server in command line
