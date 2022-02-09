@@ -6,9 +6,12 @@ import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.gradle.internal.impldep.javax.annotation.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.DirectoryNotEmptyException;
+import java.util.Arrays;
 
 /**
  * A class representing a Github Repository retrieved from a PushEvent
@@ -44,7 +47,16 @@ public class Repository {
      */
     public final User owner;
 
+    /**
+     * JGit API instance used for calling commands on the repo
+     *
+     * @see Git
+     */
     private Git git;
+
+    /**
+     * Directory the repository is located in
+     */
     private String directory;
 
     /**
@@ -65,7 +77,20 @@ public class Repository {
         this.owner = new User(repoObj.get("owner"));
     }
 
-    public Git cloneRepository(String branch, String target) {
+    /**
+     * Clone the repository based on the clone URL retrieved in the JSON and checkout the given branch.
+     *
+     * @param branch branch to check out after commit
+     * @param target directory to clone the repository in. must be empty!
+     *
+     * @return JGit instance that allows to call commands on the repository
+     *
+     * @see Repository#git x the returned value
+     * @see Git#cloneRepository() JGit API method called
+     *
+     * @throws DirectoryNotEmptyException when the target directory is not empty. not emptied automatically for safety reasons
+     */
+    public Git cloneRepository(String branch, String target) throws DirectoryNotEmptyException {
 
         if (this.git != null && this.directory != null)
             this.clean();
@@ -73,6 +98,13 @@ public class Repository {
         // dir used for repo cloning
         File outDir = new File(target);
         if (outDir.exists()) {
+
+            String[] list = outDir.list();
+            if (list == null || list.length != 0) {
+                System.out.println(Arrays.toString(list));
+                throw new DirectoryNotEmptyException("The cloning destination " + target + " is not empty!");
+            }
+
             try {
                 FileUtils.deleteDirectory(outDir);
             } catch (IOException e) {
@@ -101,6 +133,15 @@ public class Repository {
         return this.git;
     }
 
+    /**
+     * Clean up this repository's disk/memory usage by releasing the JGit reference and deleting the working dir along
+     * with its content
+     *
+     * @see Repository#directory set to null after method call
+     * @see Repository#git set to null after method call
+     * @see Git#clean() clean JGit command called
+     * @see Git#close() freeing JGit command called
+     */
     public void clean() {
 
         // close git resource
@@ -117,6 +158,7 @@ public class Repository {
         File outDir = new File(this.directory);
         if (outDir.exists()) {
             try {
+                // shouldn't be risky bc directory was ensured to be empty before cloning
                 FileUtils.deleteDirectory(outDir);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -126,6 +168,16 @@ public class Repository {
         this.directory = null;
     }
 
+    /**
+     * Get the directory the repository has been cloned in.
+     *
+     * @return this repository's directory path or null if the repository hasn't been cloned / has been cleaned
+     *
+     * @see Repository#directory the returned value
+     * @see Repository#cloneRepository(String, String) the method that sets the Repository#directory
+     * @see Repository#clean() the method that resets Repository#directory
+     */
+    @Nullable
     public String directory() {
 
         return this.directory;
