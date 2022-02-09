@@ -1,0 +1,25 @@
+plugins {
+    id "application"
+}
+apply plugin : "java"
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(15)
+    }
+}
+
+group 'com.example'
+version '1.0-SNAPSHOT'
+
+ext {
+    javaMainClass = "com.example.Main"
+}
+
+application {
+    mainClassName = javaMainClass
+}
+
+repositories {
+    mavenCentral()
+}
