@@ -59,6 +59,10 @@ public class ContinuousIntegrationServer extends AbstractHandler {
         System.out.println(target);
         System.out.println(baseRequest);
 
+        // connect to database
+        Database database = new Database();
+        Database.connect("history.db");
+
         switch(request.getRequestURI()){
             case "/gitevent":
             // Get event type
@@ -124,10 +128,6 @@ public class ContinuousIntegrationServer extends AbstractHandler {
             System.out.println("Project " + (buildStatus? "successfully built" : "build failed") + "!");
             System.out.println("[webhook][build logs]\n" + buildLogs);
 
-            // connect to database?
-            Database database = new Database();
-            Database.connect("history.db");
-
             // push the build result to database
             database.addInfo(new BuildInfo(pushEvent.headCommit.id, buildLogs.toString(), pushEvent.headCommit.timestamp));
 
@@ -144,13 +144,13 @@ public class ContinuousIntegrationServer extends AbstractHandler {
             // clean up
             fatalCleanup.accept(pushEvent, project);
             break;
-        case "/buildinfo":
-            DatabaseHistory.generateBuildInfoPage(response);
+        case "/buildhistory":
+            DatabaseHistory.generateBuildHistoryPage(response,database);
             response.setStatus(HttpServletResponse.SC_OK);
             baseRequest.setHandled(true);
             break;
-        case "/buildhistory":
-            DatabaseHistory.generateBuildHistoryPage(response);
+        case "/buildinfo":
+            DatabaseHistory.generateBuildInfoPage(response,request,database);
             response.setStatus(HttpServletResponse.SC_OK);
             baseRequest.setHandled(true);
             break;
