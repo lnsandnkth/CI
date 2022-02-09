@@ -1,23 +1,19 @@
 package com.example;
 
 import com.google.gson.JsonParser;
-import org.apache.commons.io.FileUtils;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Ref;
-import org.eclipse.jgit.lib.Repository;
+import org.gradle.tooling.GradleConnectionException;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 /**
  * Skeleton of a ContinuousIntegrationServer which acts as webhook See the Jetty documentation for API documentation of
@@ -28,10 +24,10 @@ public class ContinuousIntegrationServer extends AbstractHandler {
     /**
      * Handles an HTTP Request
      *
-     * @param target the HTTP target (e.g. : "/", "/images/...", "/history", etc.)
+     * @param target      the HTTP target (e.g. : "/", "/images/...", "/history", etc.)
      * @param baseRequest the "raw" HTTP Request
-     * @param request the processed HTTP Request
-     * @param response the response the Server sends back to the request's sender
+     * @param request     the processed HTTP Request
+     * @param response    the response the Server sends back to the request's sender
      *
      * @throws IOException
      */
@@ -80,8 +76,33 @@ public class ContinuousIntegrationServer extends AbstractHandler {
         Ref ref = gitRepository.getRepository().exactRef(fullBranch);
         System.out.printf("Checked out branch %s at commit %s...\n", fullBranch, ref.getObjectId().name());
 
-        // clean up repository
-        pushEvent.repo.clean();
+        if (!pushEvent.ref.equals(fullBranch) || !pushEvent.headCommit.id.equals(ref.getObjectId().name())) {
+            onError.accept("[webhook] wrong ref / commit checked out! should be on " + pushEvent.ref + " @ " + pushEvent.headCommit.id, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            return;
+        }
+
+        System.out.printf("Linking with Gradle Project %s @ %s...\n", pushEvent.repo.name, pushEvent.repo.directory());
+        GradleProject project = null;
+        try {
+            project = new GradleProject(pushEvent.repo.directory()).link();
+        } catch (GradleConnectionException ex) {
+            onError.accept("[webhook] couldn't connect to gradle project in : " + pushEvent.repo.directory() + "\n[webhook][errlog] printing stacktrace...", HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            ex.printStackTrace();
+        }
+
+        if (project == null || !project.linked()) {
+            onError.accept("[webhook] project linking failed. must be a valid gradle project!", HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            return;
+        }
+
+        System.out.println("Linking succeeded !");
+        System.out.println("Building project...");
+
+        ByteArrayOutputStream buildLogs = new ByteArrayOutputStream();
+        boolean buildStatus = project.buildProject(buildLogs);
+
+        System.out.println("Project " + (buildStatus? "successfully built" : "build failed") + "!");
+        System.out.println("[webhook][build logs]\n" + buildLogs);
 
         // here you do all the continuous integration tasks
         // for example
@@ -91,6 +112,9 @@ public class ContinuousIntegrationServer extends AbstractHandler {
         System.out.println(pushEvent);
 
         response.getWriter().println("CI job done");
+
+        // clean up repository
+        pushEvent.repo.clean();
     }
 
     // used to start the CI server in command line

@@ -44,16 +44,7 @@ public class Repository {
      */
     public final User owner;
 
-    /**
-     * JGit API instance used for calling commands on the repo
-     *
-     * @see Git
-     */
     private Git git;
-
-    /**
-     * Directory the repository is located in
-     */
     private String directory;
 
     /**
@@ -133,6 +124,11 @@ public class Repository {
         }
 
         this.directory = null;
+    }
+
+    public String directory() {
+
+        return this.directory;
     }
 
     @Override
