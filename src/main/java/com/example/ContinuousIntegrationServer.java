@@ -1,6 +1,8 @@
 package com.example;
 
 import com.google.gson.JsonParser;
+import com.example.database.Database;
+import com.example.database.BuildInfo;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.AbstractHandler;
@@ -10,6 +12,7 @@ import org.gradle.tooling.GradleConnectionException;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.xml.crypto.Data;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -120,6 +123,14 @@ public class ContinuousIntegrationServer extends AbstractHandler {
 
             System.out.println("Project " + (buildStatus? "successfully built" : "build failed") + "!");
             System.out.println("[webhook][build logs]\n" + buildLogs);
+
+            // connect to database?
+            Database database = new Database();
+            Database.connect("history.db");
+
+            // push the build result to database
+            database.addInfo(new BuildInfo(pushEvent.headCommit.id, buildLogs.toString(), pushEvent.headCommit.timestamp));
+
 
             // here you do all the continuous integration tasks
             // for example
