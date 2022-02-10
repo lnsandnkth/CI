@@ -6,6 +6,7 @@ import com.example.database.DatabaseHistory;
 import com.google.gson.JsonParser;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.AbstractHandler;
@@ -113,6 +114,15 @@ public class ContinuousIntegrationServer extends AbstractHandler {
         System.out.printf("Cloning repository %s...\n", pushEvent.repo.url);
         Git gitRepository = null;
         try {
+            // delete temporary directory
+            File outDir = new File("./temp_repo/");
+            if (outDir.exists()) {
+                try {
+                    FileUtils.deleteDirectory(outDir);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
             gitRepository = pushEvent.repo.cloneRepository(pushEvent.branchName, "./temp_repo/");
         } catch (DirectoryNotEmptyException ex) {
             onError.accept("[webhook] can't clone repository, target directory " + (new File("./temp_repo").getAbsolutePath()) + " not empty!", HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
