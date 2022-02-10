@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.DirectoryNotEmptyException;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 /**
  * Skeleton of a ContinuousIntegrationServer which acts as webhook See the Jetty documentation for API documentation of
@@ -29,6 +30,7 @@ public class ContinuousIntegrationServer extends AbstractHandler {
     public final Database database;
 
     public ContinuousIntegrationServer(String databaseFile) {
+
         super();
 
         this.database = new Database();
@@ -169,11 +171,8 @@ public class ContinuousIntegrationServer extends AbstractHandler {
         boolean testStatus = project.testProject(buildLogs);
 
         // push the build result to database
-        String userNames = "";
-        for (Commit singleCommit : pushEvent.commits) {
-            userNames = userNames.concat(singleCommit.author.name).concat(",");
-        }
-        String logEntryID = database.addInfo(new BuildInfo(pushEvent.headCommit.id, userNames, pushEvent.headCommit.timestamp, buildStatus ? 1: 0, testStatus ? 1 : 0, buildLogs.toString()));
+        String userNames = pushEvent.commits.stream().map(c -> c.author.name).distinct().collect(Collectors.joining(","));
+        String logEntryID = database.addInfo(new BuildInfo(pushEvent.headCommit.id, userNames, pushEvent.headCommit.timestamp, buildStatus ? 1 : 0, testStatus ? 1 : 0, buildLogs.toString()));
         System.out.println("Log entry ID = " + logEntryID);
 
         // here you do all the continuous integration tasks

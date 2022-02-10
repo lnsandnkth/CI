@@ -4,6 +4,7 @@ package com.example.database;
  * build information (commit identifier, build date, build logs)
  */
 public class BuildInfo {
+
     private final String commit_id;
     private final String user_name;
     private final String build_date;
@@ -12,25 +13,28 @@ public class BuildInfo {
     private final String logs;
 
 
-    public BuildInfo(String user_name, String commit_id ,String build_date, int build_status, int test_status, String logs) {
+    public BuildInfo(String user_name, String commit_id, String build_date, int build_status, int test_status, String logs) {
+
         this.user_name = user_name;
         this.commit_id = commit_id;
         this.build_date = build_date;
         this.build_status = build_status;
         this.test_status = test_status;
         this.logs = logs;
-
     }
 
     public String getCommit_id() {
+
         return this.commit_id;
     }
 
     public String getLogs() {
+
         return this.logs;
     }
 
     public String getBuild_date() {
+
         return this.build_date;
     }
 
@@ -38,6 +42,7 @@ public class BuildInfo {
      * @return 1 if pass, 0 if fail
      */
     public Integer getBuild_status() {
+
         return build_status;
     }
 
@@ -45,12 +50,15 @@ public class BuildInfo {
      * @return one string consists of all the usernames, separated by ','
      */
     public String getUser_name() {
+
         return user_name;
     }
+
     /**
      * @return 1 if pass, 0 if fail
      */
     public Integer getTest_status() {
+
         return test_status;
     }
 }
