@@ -26,7 +26,14 @@ import java.util.function.BiConsumer;
  */
 public class ContinuousIntegrationServer extends AbstractHandler {
 
-    public final Database database = new Database();
+    public final Database database;
+
+    public ContinuousIntegrationServer(String databaseFile) {
+        super();
+
+        this.database = new Database();
+        this.database.connect(databaseFile);
+    }
 
     /**
      * Handles an HTTP Request
@@ -180,7 +187,12 @@ public class ContinuousIntegrationServer extends AbstractHandler {
 
 
         String portENV = System.getenv("PORT");
-        System.out.println("TOKEN = " + System.getenv("Token").subSequence(0, 5) + "...");
+        String token = System.getenv("Token");
+        if (token != null)
+            System.out.println("TOKEN = " + token.subSequence(0, Math.min(token.length(), 5)) + "...");
+        else
+            System.out.println("TOKEN IS NOT SET");
+
         System.out.println("ENV PORT IS " + portENV);
 
         // get PORT from the environment variables
@@ -194,10 +206,9 @@ public class ContinuousIntegrationServer extends AbstractHandler {
         System.out.println("SELECTED PORT IS " + port);
 
         // connect to the database
-        Database.connect("history.db");
 
         Server server = new Server(port);
-        server.setHandler(new ContinuousIntegrationServer());
+        server.setHandler(new ContinuousIntegrationServer("history.db"));
         server.start();
         server.join();
     }
