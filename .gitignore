@@ -1,5 +1,6 @@
 # Ignore temp_repo
 /temp_repo/
+history.db
 
 # From https://github.com/github/gitignore/blob/master/Gradle.gitignore
 .gradle

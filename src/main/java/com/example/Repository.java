@@ -36,6 +36,12 @@ public class Repository {
     public final String url;
 
     /**
+     * Statuses url
+     */
+
+    public final String statusesUrl;
+
+    /**
      * URL to be used when cloning the Repository
      */
     public final String cloneUrl;
@@ -75,6 +81,7 @@ public class Repository {
         this.url = repoObj.get("html_url").getAsString();
         this.cloneUrl = repoObj.get("clone_url").getAsString();
         this.owner = new User(repoObj.get("owner"));
+        this.statusesUrl = repoObj.get("statuses_url").getAsString();
     }
 
     /**

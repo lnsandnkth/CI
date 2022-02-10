@@ -15,7 +15,7 @@ public class DatabaseTest {
     @BeforeAll
     @DisplayName("Setup a separate database used for testing")
     static void setup() {
-        Database.connect("test.db");
+        database.connect("test.db");
     }
 
     @Test
