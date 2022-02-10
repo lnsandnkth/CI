@@ -79,7 +79,7 @@ public class Database {
      * @return if successful the unique identifier of commit to be used for further refer, otherwise empty string
      */
     public String addInfo(BuildInfo info) {
-        String sql = "insert into builds(commit_hash,logs,build_date) values(?,?,?)";
+        String sql = "insert into builds(commit_id,logs,build_date) values(?,?,?)";
         try {
             PreparedStatement prestat = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             prestat.setString(1, info.getCommit_id());
@@ -102,7 +102,7 @@ public class Database {
      * @return BuildInfo object includes build information (commit identifier, build date, build logs) if successful get info, otherwise null
      */
     public BuildInfo getOneInfo(String commit_id) {
-        String sql = "select * from builds where commit_hash = ?";
+        String sql = "select * from builds where commit_id = ?";
         try {
             PreparedStatement prestat = c.prepareStatement(sql);
             prestat.setString(1, commit_id);
