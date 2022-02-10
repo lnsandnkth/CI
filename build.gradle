@@ -41,8 +41,20 @@ dependencies {
     implementation 'org.xerial:sqlite-jdbc:3.36.0.3'
 }
 
+run.doFirst {
+    def jsonFile = file('./conf.json')
+    def parsedJson = new groovy.json.JsonSlurper().parseText(jsonFile.text)
+
+    environment('Token', parsedJson.token)
+    environment("PORT", parsedJson.port)
+}
+
+
 test {
-    environment("PORT", "8080")
-    environment("Token", '')
+    def jsonFile = file('./conf.json')
+    def parsedJson = new groovy.json.JsonSlurper().parseText(jsonFile.text)
+
+    environment('Token', parsedJson.token)
+    environment("PORT", parsedJson.port)
     useJUnitPlatform()
 }

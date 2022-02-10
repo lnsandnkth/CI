@@ -115,8 +115,10 @@ public class Commit {
      *
      * @param buildResult indicating if build was succesful or not
      * @param repository  a repository object
+     *
+     * @return state set on Github or null if request failed
      */
-    public void postStatus(boolean buildResult, Repository repository) throws IOException {
+    public String postStatus(boolean buildResult, Repository repository) throws IOException {
         String https_url = repository.statusesUrl.replaceAll("\\{sha}", this.id);
         URL url;
         url = new URL(https_url);
@@ -141,13 +143,18 @@ public class Commit {
                 """;
 
 
-        jsonInputString = String.format(jsonFormat, repository.owner.name, repository.name, this.id, buildResult ? "success" : "failure");
+        String newState = buildResult ? "success" : "failure";
+        jsonInputString = String.format(jsonFormat, repository.owner.name, repository.name, this.id, newState);
         System.out.println(jsonInputString);
         try (OutputStream os = con.getOutputStream()) {
             byte[] input = jsonInputString.getBytes(StandardCharsets.UTF_8);
             os.write(input, 0, input.length);
         }
 
-        con.getResponseCode();
+        if (100 <= con.getResponseCode() && con.getResponseCode() <= 399) {
+            return newState;
+        } else {
+            return null;
+        }
     }
 }
