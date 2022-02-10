@@ -1,22 +1,17 @@
 package com.example.database;
 
-import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
 import java.sql.*;
 import java.util.ArrayList;
 
-import com.example.PushEvent;
-import com.example.GradleProject;
-import com.example.database.BuildInfo;
-
 public class Database {
-    static Connection c = null;
+
+    private Connection c = null;
 
     /**
      * Connect to the database
      * @param path specify the path of db
      */
-    public static void connect(String path) {
+    public void connect(String path) {
         try {
             Class.forName("org.sqlite.JDBC");
             c = DriverManager.getConnection("jdbc:sqlite:" + path);
@@ -31,7 +26,7 @@ public class Database {
     /**
      * Disconnect to database
      */
-    public static void disconnect() {
+    public void disconnect() {
         try{
             if (c != null) {
                 c.close();
@@ -45,7 +40,7 @@ public class Database {
     /**
      * Create a new table if not exist
      */
-    public static void createTable() {
+    public void createTable() {
         String sql = """
                 CREATE TABLE builds (
                         commit_id TEXT,
