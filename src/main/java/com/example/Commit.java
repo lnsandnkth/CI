@@ -1,12 +1,19 @@
 package com.example;
 
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import javax.net.ssl.HttpsURLConnection;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
 
 /**
  * Class representing a Git commit in a PushEvent
@@ -52,7 +59,6 @@ public class Commit {
      * Github API's Push Event
      *
      * @param commitElement JsonElement representing the commit
-     *
      * @see PushEvent
      */
     public Commit(JsonElement commitElement) {
@@ -75,13 +81,13 @@ public class Commit {
     public String toString() {
 
         return "Commit{" +
-               "id='" + id + '\'' +
-               ", message='" + message + '\'' +
-               ", timestamp='" + timestamp + '\'' +
-               ", url='" + url + '\'' +
-               ", author=" + author +
-               ", modified=" + Arrays.toString(modified) +
-               '}';
+                "id='" + id + '\'' +
+                ", message='" + message + '\'' +
+                ", timestamp='" + timestamp + '\'' +
+                ", url='" + url + '\'' +
+                ", author=" + author +
+                ", modified=" + Arrays.toString(modified) +
+                '}';
     }
 
     /**
@@ -89,9 +95,7 @@ public class Commit {
      * and contained JSON Objects must have been retrieved from Github's Webhook API
      *
      * @param commits JsonArray containing the commits as a JsonElement
-     *
      * @return List of the commits contained in the list, wrapped in Commit objects
-     *
      * @see Commit
      */
     public static List<Commit> fromJsonList(JsonElement commits) {
@@ -104,5 +108,46 @@ public class Commit {
         }
 
         return result;
+    }
+
+    /**
+     * If build is successful, a POST request to the endpoint of the commit status will be made.
+     *
+     * @param buildResult indicating if build was succesful or not
+     * @param repository  a repository object
+     */
+    public void postStatus(boolean buildResult, Repository repository) throws IOException {
+        String https_url = repository.statusesUrl.replaceAll("\\{sha}", this.id);
+        URL url;
+        url = new URL(https_url);
+        HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
+        con.setRequestMethod("POST");
+        con.setRequestProperty("Content-Type", "application/json");
+        con.setRequestProperty("Authorization", "token " + System.getenv("Token"));
+
+
+        con.setDoOutput(true);
+        con.setUseCaches(false);
+        String jsonInputString;
+
+
+        String jsonFormat = """
+                {
+                    "owner" : "%s",
+                    "repo" : "%s",
+                    "sha" : "%s",
+                    "state" : "%s"
+                }
+                """;
+
+
+        jsonInputString = String.format(jsonFormat, repository.owner.name, repository.name, this.id, buildResult ? "success" : "failure");
+        System.out.println(jsonInputString);
+        try (OutputStream os = con.getOutputStream()) {
+            byte[] input = jsonInputString.getBytes(StandardCharsets.UTF_8);
+            os.write(input, 0, input.length);
+        }
+
+        con.getResponseCode();
     }
 }
