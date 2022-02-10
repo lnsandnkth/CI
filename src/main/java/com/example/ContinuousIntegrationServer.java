@@ -139,6 +139,9 @@ public class ContinuousIntegrationServer extends AbstractHandler {
             System.out.println("PUSH EVENT :");
             System.out.println(pushEvent);
 
+            Commit commit = pushEvent.headCommit;
+            commit.postStatus(buildStatus, pushEvent.repo);
+
             response.getWriter().println("CI job done");
 
             // clean up
