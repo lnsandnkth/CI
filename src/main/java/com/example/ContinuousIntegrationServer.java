@@ -165,8 +165,15 @@ public class ContinuousIntegrationServer extends AbstractHandler {
         else
             System.out.println("[webhook] Commit " + commit.id + " state set to " + newState + "!");
 
+        // test the project
+        boolean testStatus = project.testProject(buildLogs);
+
         // push the build result to database
-        String logEntryID = database.addInfo(new BuildInfo(pushEvent.headCommit.id, buildLogs.toString(), pushEvent.headCommit.timestamp));
+        String userNames = "";
+        for (Commit singleCommit : pushEvent.commits) {
+            userNames = userNames.concat(singleCommit.author.name).concat(",");
+        }
+        String logEntryID = database.addInfo(new BuildInfo(pushEvent.headCommit.id, userNames, pushEvent.headCommit.timestamp, buildStatus ? 1: 0, testStatus ? 1 : 0, buildLogs.toString()));
         System.out.println("Log entry ID = " + logEntryID);
 
         // here you do all the continuous integration tasks
