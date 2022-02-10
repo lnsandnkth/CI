@@ -84,7 +84,7 @@ public class Database {
             PreparedStatement prestat = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             prestat.setString(1, info.getCommit_id());
             prestat.setString(2, info.getLogs());
-            prestat.setString(3, info.getCommit_id());
+            prestat.setString(3, info.getBuild_date());
 
             if (prestat.executeUpdate() == 1) {
                 return info.getCommit_id();
