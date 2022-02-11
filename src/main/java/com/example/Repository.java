@@ -38,7 +38,6 @@ public class Repository {
     /**
      * Statuses url
      */
-
     public final String statusesUrl;
 
     /**
@@ -188,6 +187,21 @@ public class Repository {
     public String directory() {
 
         return this.directory;
+    }
+
+    /**
+     * Get the JGit Git instance of the repository has been cloned in.
+     *
+     * @return this repository's git handle
+     *
+     * @see Repository#git the returned value
+     * @see Repository#cloneRepository(String, String) the method that sets the Repository#git
+     * @see Repository#clean() the method that resets Repository#git
+     */
+    @Nullable
+    public Git git() {
+
+        return this.git;
     }
 
     @Override
