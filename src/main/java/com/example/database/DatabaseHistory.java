@@ -5,8 +5,16 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
 
+/**
+ * Class for handling
+ */
 public class DatabaseHistory{
-
+    /**
+     * Method for building an HTML page of build histories.
+     * @param response HTTP response
+     * @param database Database to retrieve data from
+     * @throws IOException if error in input data
+     */
     public static void generateBuildHistoryPage(HttpServletResponse response, Database database) throws IOException {
         ArrayList<BuildInfo> bis = database.getAllInfo();
 
@@ -52,6 +60,13 @@ public class DatabaseHistory{
         response.getWriter().println(out);
     }
 
+    /**
+     * Method for generating HTML page for build info
+     * @param response HTTP response
+     * @param request HTTP request
+     * @param database database to get build data from
+     * @throws IOException if error in input data
+     */
     public static void generateBuildInfoPage(HttpServletResponse response, HttpServletRequest request, Database database) throws IOException {
         String commit_id = request.getParameter("commit_id");
         BuildInfo bi = database.getOneInfo(commit_id);

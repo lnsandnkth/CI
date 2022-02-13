@@ -22,13 +22,19 @@ import java.nio.file.DirectoryNotEmptyException;
 import java.util.function.BiConsumer;
 
 /**
- * Skeleton of a ContinuousIntegrationServer which acts as webhook See the Jetty documentation for API documentation of
- * those classes.
+ * Main class of the Continuous integration implementation. Implements handle() method to handle HTTP requests.
  */
 public class ContinuousIntegrationServer extends AbstractHandler {
 
+    /**
+     * The Database to be used
+     */
     public final Database database;
 
+    /**
+     * Constructor to the main server handling HTTP requests.
+     * @param databaseFile Database file to get DB info from
+     */
     public ContinuousIntegrationServer(String databaseFile) {
         super();
 
@@ -44,7 +50,7 @@ public class ContinuousIntegrationServer extends AbstractHandler {
      * @param request     the processed HTTP Request
      * @param response    the response the Server sends back to the request's sender
      *
-     * @throws IOException
+     * @throws IOException if
      */
     @Override
     public void handle(String target,
@@ -193,6 +199,12 @@ public class ContinuousIntegrationServer extends AbstractHandler {
     }
 
     // used to start the CI server in command line
+
+    /**
+     * Main function of the server. Sets environment variables and creates an instance of the class itself to handle HTTP requests.
+     * @param args command line arguments
+     * @throws Exception if error in input data
+     */
     public static void main(String[] args) throws Exception {
 
 

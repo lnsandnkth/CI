@@ -3,6 +3,9 @@ package com.example.database;
 import java.sql.*;
 import java.util.ArrayList;
 
+/**
+ * A database handling class. Connects and disconnects to the DB, creates table if it does not exist and retrieves data.
+ */
 public class Database {
 
     private Connection c = null;
@@ -70,7 +73,7 @@ public class Database {
 
     /**
      * Add a build info to the database
-     * @param info BuildInfo, combines the commit identifier and build time from PushEvent.headCommit & logs from OutputStream
+     * @param info BuildInfo, combines the commit identifier and build time from PushEvent.headCommit and logs from OutputStream
      * @return if successful the unique identifier of commit to be used for further refer, otherwise empty string
      */
     public String addInfo(BuildInfo info) {
@@ -117,7 +120,7 @@ public class Database {
 
     /**
      * Return a list of all the build information
-     * @return ArrayList<BuildInfo> if successful, otherwise null
+     * @return An ArrayList of BuildInfo objects if successful, otherwise null
      */
     public ArrayList<BuildInfo> getAllInfo() {
         String sql = "select * from builds";

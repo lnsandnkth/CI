@@ -204,6 +204,10 @@ public class Repository {
         return this.git;
     }
 
+    /**
+     * Formats the repo to a readable string format
+     * @return the repo in a string format
+     */
     @Override
     public String toString() {
 
