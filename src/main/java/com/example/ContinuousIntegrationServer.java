@@ -34,6 +34,7 @@ public class ContinuousIntegrationServer extends AbstractHandler {
 
     /**
      * Constructor to the main server handling HTTP requests.
+     *
      * @param databaseFile Database file to get DB info from
      */
     public ContinuousIntegrationServer(String databaseFile) {
@@ -119,6 +120,8 @@ public class ContinuousIntegrationServer extends AbstractHandler {
         // Parse 'push' event raw JSON data
         PushEvent pushEvent = new PushEvent(JsonParser.parseReader(new InputStreamReader(request.getInputStream())));
 
+        pushEvent.headCommit.postStatus(PushEvent.BuildStatus.PENDING, pushEvent.repo);
+
         System.out.printf("Cloning repository %s...\n", pushEvent.repo.url);
         Git gitRepository = null;
         try {
@@ -176,8 +179,14 @@ public class ContinuousIntegrationServer extends AbstractHandler {
         System.out.println("Project " + (buildStatus ? "successfully built" : "build failed") + "!");
         System.out.println("[webhook][build logs]\n" + buildLogs);
 
+
         Commit commit = pushEvent.headCommit;
-        String newState = commit.postStatus(buildStatus, pushEvent.repo);
+        String newState = commit.postStatus(
+            buildStatus ?
+                PushEvent.BuildStatus.SUCCESS :
+                PushEvent.BuildStatus.FAILURE
+            , pushEvent.repo);
+
         if (newState == null)
             System.out.println("[webhook] Couldn't set status on commit " + commit.id);
         else
@@ -207,8 +216,11 @@ public class ContinuousIntegrationServer extends AbstractHandler {
     // used to start the CI server in command line
 
     /**
-     * Main function of the server. Sets environment variables and creates an instance of the class itself to handle HTTP requests.
+     * Main function of the server. Sets environment variables and creates an instance of the class itself to handle
+     * HTTP requests.
+     *
      * @param args command line arguments
+     *
      * @throws Exception if error in input data
      */
     public static void main(String[] args) throws Exception {

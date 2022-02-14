@@ -11,6 +11,20 @@ import java.util.List;
 public class PushEvent {
 
     /**
+     * Build Status used to set commit statuses on Github
+     * Enum constant name must be one of Github's API values in UPPERCASE
+     *
+     * @link https://docs.github.com/en/rest/reference/commits#commit-statuses Github API documentation for status values
+     * @see Commit#postStatus(BuildStatus, Repository) used in this method
+     */
+    public enum BuildStatus {
+
+        PENDING,
+        FAILURE,
+        SUCCESS
+    }
+
+    /**
      * Value contained in the X-Github-Event header of the "push" Event POST Request
      */
     public static final String TYPE = "push";
