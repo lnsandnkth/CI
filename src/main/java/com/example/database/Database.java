@@ -77,7 +77,7 @@ public class Database {
      * @return if successful the unique identifier of commit to be used for further refer, otherwise empty string
      */
     public String addInfo(BuildInfo info) {
-        String sql = "insert into builds(user_name,commit_id,build_date,build_status,test_status,logs) values(?,?,?,?,?,?)";
+        String sql = "insert into builds(commit_id,user_name,build_date,build_status,test_status,logs) values(?,?,?,?,?,?)";
         try {
             PreparedStatement prestat = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             prestat.setString(1, info.getCommit_id());
