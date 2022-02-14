@@ -70,11 +70,14 @@ Some checkpoints are ambigious and interpreted quite freely. <br>
 - [@mxyns](https://www.github.com/mxyns) *Maxence Younsi*
     - .
 - [@noahra](https://www.github.com/noahra) *Noah Rahimzadagan:*
-    - .
+    - Implemented status update functionality for commits
+    - Reviewed some issues
 - [@sandy-e](https://www.github.com/sandy-e) *Sanherib Elia*:
     - project description
     - running and testing instructions
     - generated Javadoc
     - evaluated the team (SEMAT)
 - [@yuxin-miao](https://www.github.com/yuxin-miao) *Xinmiao Yu* :
-    - .
+    - connect database sqlite-jdbc to the project
+    - add data push to and pull from databse
+    - reviewed issues  
