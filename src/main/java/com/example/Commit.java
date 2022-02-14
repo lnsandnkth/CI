@@ -117,6 +117,7 @@ public class Commit {
      * @param repository  a repository object
      *
      * @return state set on Github or null if request failed
+     * @throws IOException if error in data
      */
     public String postStatus(boolean buildResult, Repository repository) throws IOException {
         String https_url = repository.statusesUrl.replaceAll("\\{sha}", this.id);

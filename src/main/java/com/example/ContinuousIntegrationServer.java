@@ -6,6 +6,7 @@ import com.example.database.DatabaseHistory;
 import com.google.gson.JsonParser;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.AbstractHandler;
@@ -22,13 +23,19 @@ import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 /**
- * Skeleton of a ContinuousIntegrationServer which acts as webhook See the Jetty documentation for API documentation of
- * those classes.
+ * Main class of the Continuous integration implementation. Implements handle() method to handle HTTP requests.
  */
 public class ContinuousIntegrationServer extends AbstractHandler {
 
+    /**
+     * The Database to be used
+     */
     public final Database database;
 
+    /**
+     * Constructor to the main server handling HTTP requests.
+     * @param databaseFile Database file to get DB info from
+     */
     public ContinuousIntegrationServer(String databaseFile) {
 
         super();
@@ -45,7 +52,7 @@ public class ContinuousIntegrationServer extends AbstractHandler {
      * @param request     the processed HTTP Request
      * @param response    the response the Server sends back to the request's sender
      *
-     * @throws IOException
+     * @throws IOException if
      */
     @Override
     public void handle(String target,
@@ -115,6 +122,15 @@ public class ContinuousIntegrationServer extends AbstractHandler {
         System.out.printf("Cloning repository %s...\n", pushEvent.repo.url);
         Git gitRepository = null;
         try {
+            // delete temporary directory
+            File outDir = new File("./temp_repo/");
+            if (outDir.exists()) {
+                try {
+                    FileUtils.deleteDirectory(outDir);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
             gitRepository = pushEvent.repo.cloneRepository(pushEvent.branchName, "./temp_repo/");
         } catch (DirectoryNotEmptyException ex) {
             onError.accept("[webhook] can't clone repository, target directory " + (new File("./temp_repo").getAbsolutePath()) + " not empty!", HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
@@ -189,6 +205,12 @@ public class ContinuousIntegrationServer extends AbstractHandler {
     }
 
     // used to start the CI server in command line
+
+    /**
+     * Main function of the server. Sets environment variables and creates an instance of the class itself to handle HTTP requests.
+     * @param args command line arguments
+     * @throws Exception if error in input data
+     */
     public static void main(String[] args) throws Exception {
 
 

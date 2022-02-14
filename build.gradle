@@ -9,6 +9,10 @@ java {
     }
 }
 
+javadoc {
+    source = sourceSets.main.allJava
+}
+
 group 'com.example'
 version '1.0-SNAPSHOT'
 
