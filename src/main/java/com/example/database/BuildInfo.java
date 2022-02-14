@@ -13,10 +13,10 @@ public class BuildInfo {
     private final String logs;
 
 
-    public BuildInfo(String user_name, String commit_id, String build_date, int build_status, int test_status, String logs) {
+    public BuildInfo(String commit_id, String user_name, String build_date, int build_status, int test_status, String logs) {
 
-        this.user_name = user_name;
         this.commit_id = commit_id;
+        this.user_name = user_name;
         this.build_date = build_date;
         this.build_status = build_status;
         this.test_status = test_status;
