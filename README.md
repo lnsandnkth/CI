@@ -68,7 +68,12 @@ Some checkpoints are ambigious and interpreted quite freely. <br>
     - generating build history and build info pages
     - fixed: folder deletion, tried to fix ram usage for remote server(did not work)
 - [@mxyns](https://www.github.com/mxyns) *Maxence Younsi*
-    - .
+    - json payload parsing with Gson into PushEvent/Repository/Commit/User objects (+ doc)
+    - gradle project linking, build and test using Gradle Tooling API lib (+ doc)
+    - git cloning, branch/commit/ref checkout & cleanup with JGit (+ doc)
+    - pair programming/debugging commit status with [@noahra](https://www.github.com/noahra)
+    - commit link in history, pending commit status
+    - reviewed some PRs, made tests for gradle, git, json parsing
 - [@noahra](https://www.github.com/noahra) *Noah Rahimzadagan:*
     - Implemented status update functionality for commits
     - Reviewed some issues
@@ -79,5 +84,5 @@ Some checkpoints are ambigious and interpreted quite freely. <br>
     - evaluated the team (SEMAT)
 - [@yuxin-miao](https://www.github.com/yuxin-miao) *Xinmiao Yu* :
     - connect database sqlite-jdbc to the project
-    - add data push to and pull from databse
+    - add data push to and pull from database
     - reviewed issues  
