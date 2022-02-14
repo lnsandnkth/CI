@@ -70,7 +70,7 @@ Some checkpoints are ambigious and interpreted quite freely. <br>
 - [@mxyns](https://www.github.com/mxyns) *Maxence Younsi*
     - .
 - [@noahra](https://www.github.com/noahra) *Noah Rahimzadagan:*
-    - Implemented update functionality of git status
+    - Implemented status update functionality for commits
     - Reviewed some issues
 - [@sandy-e](https://www.github.com/sandy-e) *Sanherib Elia*:
     - project description
