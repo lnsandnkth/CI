@@ -3,12 +3,13 @@ This project implements a continuous integration server, as stated by [assignmen
 
 
 ### How to build and run
-0. Make sure to JRE 15 installed
+0. Make sure to have any JRE installed
 1. Run `./gradlew check` to set up the environment
 2. Run `./gradlew clean test` to run the tests
-3. run `./gradlew javadocs` to generate Javadoc HTML. The files will be located in `build/docs/com/example`. 
-4. Run the `ContinuousIntegrationServer` class to start the server handler.
-Note: environment variables `Token`needs to be set and `PORT`specified (otherwise port 8080 will be used) in `conf.json`. 
+3. Run `./gradlew javadoc` to generate Javadoc HTML. The files will be located in `build/docs`. 
+4. Start the server by running `./gradlew run`.
+Note: environment variables `Token`needs to be set and `PORT`specified (otherwise port 8080 will be used) in `conf.json`.
+The token is a GitHub "Personal access token" with at least `repo` permission.
 5. Configure a repo webhook to your server address.
 
 ### Way of working
