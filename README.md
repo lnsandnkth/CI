@@ -63,16 +63,18 @@ Some checkpoints are ambigious and interpreted quite freely. <br>
 ### Authors
 
 - [@lnsandnkth](https://www.github.com/lnsandnkth) *Leon Sandner* :
-    - .
+    - reviewed issues: 23/28,20/22,21,7,10,45,50,51,52
+    - url mapping
+    - generating build history and build info pages
+    - fixed: folder deletion, tried to fix ram usage for remote server(did not work)
 - [@mxyns](https://www.github.com/mxyns) *Maxence Younsi*
     - .
-- [@yuxin-miao](https://www.github.com/yuxin-miao) *Xinmiao Yu* :
+- [@noahra](https://www.github.com/noahra) *Noah Rahimzadagan:*
     - .
 - [@sandy-e](https://www.github.com/sandy-e) *Sanherib Elia*:
     - project description
     - running and testing instructions
     - generated Javadoc
     - evaluated the team (SEMAT)
-- [@noahra](https://www.github.com/noahra) *Noah Rahimzadagan:*
+- [@yuxin-miao](https://www.github.com/yuxin-miao) *Xinmiao Yu* :
     - .
-
