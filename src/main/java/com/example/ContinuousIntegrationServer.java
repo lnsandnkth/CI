@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.DirectoryNotEmptyException;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 /**
  * Main class of the Continuous integration implementation. Implements handle() method to handle HTTP requests.
@@ -36,6 +37,7 @@ public class ContinuousIntegrationServer extends AbstractHandler {
      * @param databaseFile Database file to get DB info from
      */
     public ContinuousIntegrationServer(String databaseFile) {
+
         super();
 
         this.database = new Database();
@@ -181,8 +183,12 @@ public class ContinuousIntegrationServer extends AbstractHandler {
         else
             System.out.println("[webhook] Commit " + commit.id + " state set to " + newState + "!");
 
+        // test the project
+        boolean testStatus = project.testProject(buildLogs);
+
         // push the build result to database
-        String logEntryID = database.addInfo(new BuildInfo(pushEvent.headCommit.id, buildLogs.toString(), pushEvent.headCommit.timestamp));
+        String userNames = pushEvent.commits.stream().map(c -> c.author.name).distinct().collect(Collectors.joining(","));
+        String logEntryID = database.addInfo(new BuildInfo(pushEvent.headCommit.id, userNames, pushEvent.headCommit.timestamp, buildStatus ? 1 : 0, testStatus ? 1 : 0, buildLogs.toString()));
         System.out.println("Log entry ID = " + logEntryID);
 
         // here you do all the continuous integration tasks

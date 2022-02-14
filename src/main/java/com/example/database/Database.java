@@ -47,8 +47,11 @@ public class Database {
         String sql = """
                 CREATE TABLE builds (
                         commit_id TEXT,
-                        logs TEXT,
-                        build_date TEXT
+                        user_name TEXT,
+                        build_date TEXT,
+                        build_status INTEGER,
+                        test_status INTEGER,
+                        logs TEXT
                 );
                 """;
         try {
@@ -77,12 +80,15 @@ public class Database {
      * @return if successful the unique identifier of commit to be used for further refer, otherwise empty string
      */
     public String addInfo(BuildInfo info) {
-        String sql = "insert into builds(commit_id,logs,build_date) values(?,?,?)";
+        String sql = "insert into builds(commit_id,user_name,build_date,build_status,test_status,logs) values(?,?,?,?,?,?)";
         try {
             PreparedStatement prestat = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             prestat.setString(1, info.getCommit_id());
-            prestat.setString(2, info.getLogs());
+            prestat.setString(2, info.getUser_name());
             prestat.setString(3, info.getBuild_date());
+            prestat.setInt(4, info.getBuild_status());
+            prestat.setInt(5, info.getTest_status());
+            prestat.setString(6, info.getLogs());
 
             if (prestat.executeUpdate() == 1) {
                 return info.getCommit_id();
@@ -106,9 +112,12 @@ public class Database {
             prestat.setString(1, commit_id);
             ResultSet res = prestat.executeQuery();
             if (res.next()) {
-                String logs = res.getString(2);
+                String user_name = res.getString(2);
                 String build_date = res.getString(3);
-                return new BuildInfo(commit_id, logs, build_date);
+                int build_status = res.getInt(4);
+                int test_status = res.getInt(5);
+                String logs = res.getString(6);
+                return new BuildInfo(commit_id, user_name, build_date, build_status, test_status, logs);
             }
             return null;
 
@@ -130,9 +139,12 @@ public class Database {
             ResultSet res = prestat.executeQuery();
             while (res.next()) {
                 String commit_id = res.getString(1);
-                String logs = res.getString(2);
+                String user_name = res.getString(2);
                 String build_date = res.getString(3);
-                allBuilds.add(new BuildInfo(commit_id, logs, build_date));
+                int build_status = res.getInt(4);
+                int test_status = res.getInt(5);
+                String logs = res.getString(6);
+                allBuilds.add(new BuildInfo(commit_id, user_name, build_date, build_status, test_status, logs));
             }
             return allBuilds;
         } catch (SQLException e) {
