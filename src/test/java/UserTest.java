@@ -275,7 +275,7 @@ public class UserTest {
                 Assertions.assertEquals(committer.name, "web-flow");
                 Assertions.assertEquals(committer.email, "noreply@github.com");
                 Assertions.assertEquals(committer.avatarUrl, "");
-                Assertions.assertEquals(committer.htmlUrl, "sdf");
+                Assertions.assertEquals(committer.htmlUrl, "");
                 System.out.println(committer);
             }
                                      );
