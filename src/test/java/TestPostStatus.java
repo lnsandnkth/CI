@@ -211,9 +211,7 @@ public class TestPostStatus {
 
                     PushEvent pushEvent = new PushEvent(pushEventRequest);
                     Commit commit = pushEvent.headCommit;
-                    commit.postStatus(true, pushEvent.repo);
-
-
+                    commit.postStatus(PushEvent.BuildStatus.SUCCESS, pushEvent.repo);
                 }
         );
     }

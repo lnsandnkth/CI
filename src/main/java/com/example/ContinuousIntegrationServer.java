@@ -6,6 +6,7 @@ import com.example.database.DatabaseHistory;
 import com.google.gson.JsonParser;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.AbstractHandler;
@@ -19,16 +20,25 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.DirectoryNotEmptyException;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 /**
- * Skeleton of a ContinuousIntegrationServer which acts as webhook See the Jetty documentation for API documentation of
- * those classes.
+ * Main class of the Continuous integration implementation. Implements handle() method to handle HTTP requests.
  */
 public class ContinuousIntegrationServer extends AbstractHandler {
 
+    /**
+     * The Database to be used
+     */
     public final Database database;
 
+    /**
+     * Constructor to the main server handling HTTP requests.
+     *
+     * @param databaseFile Database file to get DB info from
+     */
     public ContinuousIntegrationServer(String databaseFile) {
+
         super();
 
         this.database = new Database();
@@ -43,7 +53,7 @@ public class ContinuousIntegrationServer extends AbstractHandler {
      * @param request     the processed HTTP Request
      * @param response    the response the Server sends back to the request's sender
      *
-     * @throws IOException
+     * @throws IOException if
      */
     @Override
     public void handle(String target,
@@ -110,9 +120,20 @@ public class ContinuousIntegrationServer extends AbstractHandler {
         // Parse 'push' event raw JSON data
         PushEvent pushEvent = new PushEvent(JsonParser.parseReader(new InputStreamReader(request.getInputStream())));
 
+        pushEvent.headCommit.postStatus(PushEvent.BuildStatus.PENDING, pushEvent.repo);
+
         System.out.printf("Cloning repository %s...\n", pushEvent.repo.url);
         Git gitRepository = null;
         try {
+            // delete temporary directory
+            File outDir = new File("./temp_repo/");
+            if (outDir.exists()) {
+                try {
+                    FileUtils.deleteDirectory(outDir);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
             gitRepository = pushEvent.repo.cloneRepository(pushEvent.branchName, "./temp_repo/");
         } catch (DirectoryNotEmptyException ex) {
             onError.accept("[webhook] can't clone repository, target directory " + (new File("./temp_repo").getAbsolutePath()) + " not empty!", HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
@@ -158,15 +179,25 @@ public class ContinuousIntegrationServer extends AbstractHandler {
         System.out.println("Project " + (buildStatus ? "successfully built" : "build failed") + "!");
         System.out.println("[webhook][build logs]\n" + buildLogs);
 
+
         Commit commit = pushEvent.headCommit;
-        String newState = commit.postStatus(buildStatus, pushEvent.repo);
+        String newState = commit.postStatus(
+            buildStatus ?
+                PushEvent.BuildStatus.SUCCESS :
+                PushEvent.BuildStatus.FAILURE
+            , pushEvent.repo);
+
         if (newState == null)
             System.out.println("[webhook] Couldn't set status on commit " + commit.id);
         else
             System.out.println("[webhook] Commit " + commit.id + " state set to " + newState + "!");
 
+        // test the project
+        boolean testStatus = project.testProject(buildLogs);
+
         // push the build result to database
-        String logEntryID = database.addInfo(new BuildInfo(pushEvent.headCommit.id, buildLogs.toString(), pushEvent.headCommit.timestamp));
+        String userNames = pushEvent.commits.stream().map(c -> c.author.name).distinct().collect(Collectors.joining(","));
+        String logEntryID = database.addInfo(new BuildInfo(pushEvent.headCommit.id, userNames, pushEvent.headCommit.timestamp, buildStatus ? 1 : 0, testStatus ? 1 : 0, buildLogs.toString()));
         System.out.println("Log entry ID = " + logEntryID);
 
         // here you do all the continuous integration tasks
@@ -183,6 +214,15 @@ public class ContinuousIntegrationServer extends AbstractHandler {
     }
 
     // used to start the CI server in command line
+
+    /**
+     * Main function of the server. Sets environment variables and creates an instance of the class itself to handle
+     * HTTP requests.
+     *
+     * @param args command line arguments
+     *
+     * @throws Exception if error in input data
+     */
     public static void main(String[] args) throws Exception {
 
 

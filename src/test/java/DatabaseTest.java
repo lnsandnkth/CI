@@ -19,16 +19,17 @@ public class DatabaseTest {
     }
 
     @Test
-    @DisplayName("Test adding entries to databse")
+    @DisplayName("Test adding entries to database")
     static void testAddInfo() {
-        String time = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now());
         String commit = "4f5j6fu9o";
         String log = "This is a test log ";
         for (int i = 0; i < 5; i++) {
             String currentTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now());
             String newCommitId = commit.concat(String.valueOf(i));
             String newLog = log.concat(String.valueOf(i));
-            BuildInfo info = new BuildInfo(newCommitId, newLog, currentTime);
+            int build_status = 1;
+            int test_status = 1;
+            BuildInfo info = new BuildInfo(newCommitId, "user_name_test", currentTime, build_status, test_status, newLog);
             infos.add(info);
             String returnCommitId = database.addInfo(info);
             Assertions.assertEquals(newCommitId, returnCommitId);

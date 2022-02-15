@@ -113,12 +113,14 @@ public class Commit {
     /**
      * If build is successful, a POST request to the endpoint of the commit status will be made.
      *
-     * @param buildResult indicating if build was succesful or not
+     * @param status BuildStatus value equivalent to Github API state
      * @param repository  a repository object
      *
      * @return state set on Github or null if request failed
+     * @see com.example.PushEvent.BuildStatus enum values in input
+     * @throws IOException if error in data
      */
-    public String postStatus(boolean buildResult, Repository repository) throws IOException {
+    public String postStatus(PushEvent.BuildStatus status, Repository repository) throws IOException {
         String https_url = repository.statusesUrl.replaceAll("\\{sha}", this.id);
         URL url;
         url = new URL(https_url);
@@ -143,7 +145,7 @@ public class Commit {
                 """;
 
 
-        String newState = buildResult ? "success" : "failure";
+        String newState = status.name().toLowerCase();
         jsonInputString = String.format(jsonFormat, repository.owner.name, repository.name, this.id, newState);
         System.out.println(jsonInputString);
         try (OutputStream os = con.getOutputStream()) {
