@@ -60,11 +60,11 @@ Some checkpoints are ambigious and interpreted quite freely. <br>
 
 ### Reasons for P+
 - we configured a heroku remote server for this project to run everything, instead of using our laptops as servers. This was done so we there won't be several servers running at the same time, resulting in possible conflicts. And because that way we won't need to update the webhooks all the time when getting a new ngrok link. Also the database would have a complete build history, since when we implemented the db functionalities. But we could not afford the more expensive heroku service with more ram (500kr/mon). So from the point in the project where it could clone and build a new commit, the server needed more ram as was possible, and it could not build and test new commits anymore. Only sometimes it went through, as the ram needed was only slightly above the max capacity.
+- we also push the pending status to github, not only passed or fail
 - we generate a build history and a build info page, with more than just the build log, commit_id and timestamp. We also include the build and test result (success, or fail), and the name of who commited.
     - we also styled it nicely with css
     - you can also click the commit_id in the buildhistory to get to the info of only the one build
 - we also linked most commits (typically 90%) to an issue describing the feature / commit.
-
 
 ### Authors
 
