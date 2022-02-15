@@ -14,7 +14,7 @@ public class PushEvent {
      * Build Status used to set commit statuses on Github
      * Enum constant name must be one of Github's API values in UPPERCASE
      *
-     * @link https://docs.github.com/en/rest/reference/commits#commit-statuses Github API documentation for status values
+     * @see <a href="https://docs.github.com/en/rest/reference/commits#commit-statuses">Github API documentation for status values</a>
      * @see Commit#postStatus(BuildStatus, Repository) used in this method
      */
     public enum BuildStatus {
